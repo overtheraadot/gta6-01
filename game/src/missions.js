@@ -1,157 +1,247 @@
-// DUSKPORT missions: a heist-getaway story chain + repeatable side jobs.
-// Meet Mara → tool up → lift the getaway car → escape the block → lose the heat → free roam.
-import * as THREE from 'three';
+// DUSKPORT — Neon Getaway: missions and story.
+// Vex Marlowe, the best getaway driver in Duskport, owes the Meridian crew
+// one last job. Six missions take her from her first stolen car to the Vault
+// job and the final five-star run to the Hideout — plus eight neon cash
+// caches hidden around the city for players who explore.
 
-export function buildingFront(city, name) {
-  const b = city.buildings.find((x) => x.name === name);
-  if (!b) return new THREE.Vector3(0, 0, 0);
-  const south = b.z >= 0;
-  return new THREE.Vector3(b.x, 0, b.z + (south ? b.d / 2 + 3.5 : -b.d / 2 - 3.5));
-}
+'use strict';
 
-export const STORY_MISSIONS = [
+const CACHE_SPOTS = [
+  { x: 480, y: 480 }, { x: 2720, y: 480 }, { x: 480, y: 2080 }, { x: 1440, y: 800 },
+  { x: 3040, y: 1440 }, { x: 800, y: 1120 }, { x: 2400, y: 1760 }, { x: 1760, y: 2080 },
+];
+
+const MISSION_DEFS = [
   {
-    id: 'meet-mara', title: 'MEET MARA', radius: 5,
-    text: 'Walk to the neon sign at Dockside Bar. Mara Voss is waiting with the plan.',
-    target: (city) => buildingFront(city, 'DOCKSIDE BAR'),
-    banner: ['MEET MARA', 'The plan starts at Dockside Bar'],
+    name: 'First Wheels', brief: 'The crew needs wheels. Steal any car on the street — walk up and press E.',
+    reward: 300,
   },
   {
-    id: 'tool-up', title: 'TOOL UP', radius: 3.5,
-    text: 'Grab the pistol stash in the alley behind Volt Garage. The crew is armed tonight.',
-    target: (city) => new THREE.Vector3(20, 0, -22),
-    banner: ['TOOL UP', 'A pistol is waiting in the alley'],
+    name: 'Neon Run', brief: 'A buyer waits on Neon Row. Drive there before the 60-second window closes.',
+    reward: 600,
   },
   {
-    id: 'lift-car', title: 'LIFT THE GETAWAY CAR', radius: 4,
-    text: 'Steal the midnight coupe parked by the garage. Press E beside it — the crew is watching.',
-    target: (city) => new THREE.Vector3(33, 0, -22),
-    banner: ['LIFT THE GETAWAY CAR', 'The midnight coupe is yours for the taking'],
+    name: 'Midnight Pickup', brief: 'Three packages wait at the Docks. Collect them all — on foot or by car.',
+    reward: 900,
   },
   {
-    id: 'escape', title: 'ESCAPE THE BLOCK', radius: 7,
-    text: 'Drive north through the cordon to the highway gate. The whole district is looking for that car.',
-    target: () => new THREE.Vector3(0, 0, -104),
-    banner: ['ESCAPE THE BLOCK', 'Lose the cordon — drive north'],
+    name: 'Heat Rising', brief: 'The crew wants the DPD scared. Raise 3 stars, survive the chase, then vanish.',
+    reward: 1200,
   },
   {
-    id: 'lose-heat', title: 'LOSE THE HEAT', radius: 6,
-    text: 'Shake the patrol cars, then slip back to the safehouse off Meridian Row.',
-    target: () => new THREE.Vector3(0, 0, 11),
-    banner: ['LOSE THE HEAT', 'Get clean, then come home'],
+    name: 'The Vault Job', brief: 'Meridian Vault. Get inside the marker, grab the cash, then lose yourself at the garage.',
+    reward: 2500,
+  },
+  {
+    name: 'Duskport King', brief: 'Five stars. The whole DPD is coming. Reach the Hideout and the city is yours.',
+    reward: 5000,
   },
 ];
 
-export const SIDE_JOBS = [
-  {
-    id: 'courier', title: 'SIDE JOB: COURIER RUN', radius: 6,
-    text: 'A package for the Night Market. Drive it to Pier 9 Diner — fast, no questions.',
-    target: () => new THREE.Vector3(77, 0, 96), pay: 300,
-  },
-  {
-    id: 'shakedown', title: 'SIDE JOB: SHAKEDOWN', radius: 5,
-    text: 'A rival crew is muscling in by the docks. Clear them out — Mara has your back.',
-    target: () => new THREE.Vector3(-77, 0, 88), pay: 450,
-  },
-  {
-    id: 'courier2', title: 'SIDE JOB: HARBOUR DROP', radius: 6,
-    text: 'Drop the crate at the Palm Motel car park. Keep it quiet.',
-    target: () => new THREE.Vector3(55, 0, 22), pay: 350,
-  },
-];
+const Missions = {
+  index: 0, stage: 0, timer: 0, stageTimer: 0, holdTimer: 0,
+  packages: [], cachesTaken: {}, done: false, won: false,
+  packageSpots: [
+    { x: 2200, y: 2120 }, { x: 2480, y: 2120 }, { x: 2760, y: 2120 },
+  ],
 
-export class MissionRunner {
-  constructor(scene, city, hooks) {
-    this.scene = scene; this.city = city; this.hooks = hooks;
-    this.index = 0;           // index into STORY_MISSIONS, or -1 for side jobs
-    this.sideIndex = 0;
-    this.sideJob = null;
-    this.done = false;
-    this.lastHotToast = 0;
-    this.beacon = new THREE.Group();
-    const beam = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.9, 1.4, 26, 12, 1, true),
-      new THREE.MeshBasicMaterial({ color: '#ffd166', transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false }),
-    );
-    beam.position.y = 13; this.beacon.add(beam);
-    const dia = new THREE.Mesh(new THREE.OctahedronGeometry(0.9),
-      new THREE.MeshBasicMaterial({ color: '#ffd166' }));
-    dia.position.y = 4.5; this.beacon.add(dia);
-    this.beaconDiamond = dia;
-    const ring = new THREE.Mesh(new THREE.RingGeometry(1.6, 2.2, 32),
-      new THREE.MeshBasicMaterial({ color: '#ffd166', transparent: true, opacity: 0.8, side: THREE.DoubleSide }));
-    ring.rotation.x = -Math.PI / 2; ring.position.y = 0.08; this.beacon.add(ring);
-    scene.add(this.beacon);
-    this.setMission(0);
-  }
-  current() {
-    if (this.index >= 0) return STORY_MISSIONS[this.index];
-    return this.sideJob;
-  }
-  targetPos() {
-    const m = this.current();
-    return m ? m.target(this.city) : null;
-  }
-  setMission(i) {
-    this.index = i;
-    const m = this.current();
-    if (!m) return;
-    this.hooks.onMission(m);
-    if (m.banner) this.hooks.onBanner(m.banner[0], m.banner[1]);
-    const t = this.targetPos();
-    if (t) this.beacon.position.set(t.x, 0, t.z);
-  }
-  startSideJob() {
-    this.index = -1;
-    this.sideJob = SIDE_JOBS[this.sideIndex % SIDE_JOBS.length];
-    this.sideIndex++;
-    this.hooks.onMission(this.sideJob);
-    this.hooks.onBanner(this.sideJob.title, 'Side job — ' + this.sideJob.pay + ' on the line');
-    const t = this.targetPos();
-    if (t) this.beacon.position.set(t.x, 0, t.z);
-  }
-  // Called every frame; returns an event string when something happens.
-  update(playerPos, state) {
-    const m = this.current();
-    if (!m) return null;
-    this.beaconDiamond.rotation.y += 0.02;
-    this.beaconDiamond.position.y = 4.5 + Math.sin(performance.now() * 0.003) * 0.5;
-    const t = this.targetPos();
-    if (!t) return null;
-    const d = Math.hypot(playerPos.x - t.x, playerPos.z - t.z);
-    if (d > m.radius) return null;
-    // Arrived.
-    if (this.index >= 0) {
-      const arrived = m.id;
-      if (arrived === 'meet-mara') { this.hooks.onMeetMara(); this.setMission(1); return 'meet-mara'; }
-      if (arrived === 'tool-up') { this.hooks.onToolUp(); this.setMission(2); return 'tool-up'; }
-      if (arrived === 'lift-car') { return 'at-car'; } // steal happens with E
-      if (arrived === 'escape') { this.hooks.onEscape(); this.setMission(4); return 'escape'; }
-      if (arrived === 'lose-heat') {
-        if (state.wanted > 0) {
-          const now = performance.now();
-          if (now - this.lastHotToast > 3000) { this.lastHotToast = now; this.hooks.onToast('Too hot — lose the heat first!'); }
-          return 'too-hot';
-        }
-        this.hooks.onStoryComplete();
-        this.index = -2; this.done = true;
-        this.startSideJob();
-        return 'story-complete';
+  reset() {
+    this.index = 0; this.stage = 0; this.timer = 0; this.stageTimer = 0; this.holdTimer = 0;
+    this.packages = []; this.cachesTaken = {}; this.done = false; this.won = false;
+    this.startMission(0);
+  },
+
+  startMission(i) {
+    this.index = i; this.stage = 0; this.timer = 0; this.stageTimer = 0; this.holdTimer = 0;
+    const def = MISSION_DEFS[i];
+    if (!def) { this.done = true; return; }
+    if (i === 1) this.timer = 60;
+    if (i === 2) this.packages = this.packageSpots.map(p => ({ x: p.x, y: p.y, taken: false }));
+    if (i === 3) this.stageTimer = 45;
+    if (i === 5) Wanted.addHeat(100);
+    Toasts.push('Mission: ' + def.name + ' — ' + def.brief, 5200);
+    AudioSys.cash();
+  },
+
+  objective() {
+    if (this.done) return 'Duskport is yours. Free roam — caches, chaos, whatever you like.';
+    const def = MISSION_DEFS[this.index];
+    switch (this.index) {
+      case 0: return 'MISSION: First Wheels — steal a car (walk up, press E)';
+      case 1: return 'MISSION: Neon Run — reach Neon Row in ' + Math.ceil(this.timer) + 's';
+      case 2: {
+        const left = this.packages.filter(p => !p.taken).length;
+        return 'MISSION: Midnight Pickup — collect the packages (' + (3 - left) + '/3)';
       }
-    } else if (this.sideJob) {
-      if (this.sideJob.id === 'shakedown' && !state.gangCleared) {
-        const now = performance.now();
-        if (now - this.lastHotToast > 3000) { this.lastHotToast = now; this.hooks.onToast('Clear the rival crew first!'); }
-        return 'gang-remains';
-      }
-      this.hooks.onSideJobDone(this.sideJob.pay);
-      this.startSideJob();
-      return 'side-done';
+      case 3:
+        if (this.stage === 0) return 'MISSION: Heat Rising — raise your wanted level to 3 stars';
+        if (this.stage === 1) return 'MISSION: Heat Rising — survive the chase (' + Math.ceil(this.stageTimer) + 's left)';
+        return 'MISSION: Heat Rising — lose the cops (wanted back to 0)';
+      case 4:
+        if (this.stage === 0) return 'MISSION: The Vault Job — get to the Meridian Vault';
+        if (this.stage === 1) return 'MISSION: The Vault Job — hold the vault marker to grab the cash';
+        return 'MISSION: The Vault Job — escape to the garage!';
+      case 5: return 'MISSION: Duskport King — reach the Hideout with 5 stars on you';
+      default: return def.brief;
     }
-    return null;
-  }
-  completeLiftCar() {
-    if (this.index === 2) { this.setMission(3); return true; }
-    return false;
-  }
-}
+  },
+
+  marker() {
+    if (this.done) return null;
+    switch (this.index) {
+      case 0: return null;
+      case 1: return Landmarks.neonRow;
+      case 2: {
+        const p = this.packages.find(pk => !pk.taken);
+        return p ? { x: p.x, y: p.y } : null;
+      }
+      case 3: return null;
+      case 4:
+        if (this.stage === 0 || this.stage === 1) return Landmarks.vault;
+        return Landmarks.garage;
+      case 5: return Landmarks.hideout;
+      default: return null;
+    }
+  },
+
+  completeMission() {
+    const def = MISSION_DEFS[this.index];
+    Player.cash += def.reward;
+    AudioSys.cash();
+    Toasts.push('Mission complete: ' + def.name + ' — +$' + def.reward, 4200);
+    if (this.index >= MISSION_DEFS.length - 1) {
+      this.done = true; this.won = true;
+      Game.state = 'won';
+      return;
+    }
+    this.startMission(this.index + 1);
+  },
+
+  restartCurrent() { this.startMission(this.index); },
+
+  update(dt) {
+    if (this.done || Game.state !== 'playing') return;
+    const p = Player.pos();
+    // Neon caches: free money for explorers.
+    for (let i = 0; i < CACHE_SPOTS.length; i++) {
+      if (this.cachesTaken[i]) continue;
+      const c = CACHE_SPOTS[i];
+      if (dist(p.x, p.y, c.x, c.y) < 48) {
+        this.cachesTaken[i] = true;
+        Player.cash += 500;
+        AudioSys.pickup();
+        Toasts.push('Neon cache found! +$500 (' + Object.keys(this.cachesTaken).length + '/8)');
+      }
+    }
+    switch (this.index) {
+      case 0:
+        if (Player.car) this.completeMission();
+        break;
+      case 1: {
+        this.timer -= dt;
+        if (dist(p.x, p.y, Landmarks.neonRow.x, Landmarks.neonRow.y) < 90) this.completeMission();
+        else if (this.timer <= 0) {
+          Toasts.push('Too slow — the buyer left. Try the run again.');
+          this.startMission(1);
+        }
+        break;
+      }
+      case 2: {
+        for (const pk of this.packages) {
+          if (!pk.taken && dist(p.x, p.y, pk.x, pk.y) < 54) {
+            pk.taken = true; AudioSys.pickup();
+            Toasts.push('Package secured (' + this.packages.filter(q => q.taken).length + '/3)');
+          }
+        }
+        if (this.packages.every(pk => pk.taken)) this.completeMission();
+        break;
+      }
+      case 3: {
+        if (this.stage === 0 && Wanted.stars() >= 3) { this.stage = 1; Toasts.push('3 stars! Now survive the chase.'); }
+        else if (this.stage === 1) {
+          if (Wanted.stars() >= 3) {
+            this.stageTimer -= dt;
+            if (this.stageTimer <= 0) { this.stage = 2; Toasts.push('You outlasted them. Now vanish — wanted back to 0.'); }
+          }
+        } else if (this.stage === 2 && Wanted.stars() === 0) this.completeMission();
+        break;
+      }
+      case 4: {
+        if (this.stage === 0 && dist(p.x, p.y, Landmarks.vault.x, Landmarks.vault.y) < 150) {
+          this.stage = 1; this.holdTimer = 0;
+          Toasts.push('Inside! Hold the marker to crack the vault.');
+        } else if (this.stage === 1) {
+          if (dist(p.x, p.y, Landmarks.vault.x, Landmarks.vault.y) < 150) {
+            this.holdTimer += dt;
+            if (this.holdTimer >= 3) {
+              this.stage = 2;
+              Wanted.addHeat(50);
+              Toasts.push('Cash grabbed! The alarms are screaming — get to the garage!');
+            }
+          } else this.holdTimer = Math.max(0, this.holdTimer - dt);
+        } else if (this.stage === 2 && dist(p.x, p.y, Landmarks.garage.x, Landmarks.garage.y) < 150) {
+          this.completeMission();
+        }
+        break;
+      }
+      case 5: {
+        if (dist(p.x, p.y, Landmarks.hideout.x, Landmarks.hideout.y) < 90) this.completeMission();
+        break;
+      }
+    }
+  },
+
+  draw(ctx, cam, t) {
+    // Mission marker beacon.
+    const m = this.marker();
+    if (m) {
+      const mx = m.x - cam.x, my = m.y - cam.y;
+      const pulse = 1 + 0.18 * Math.sin(t * 5);
+      ctx.save();
+      ctx.translate(mx, my);
+      ctx.scale(pulse, pulse);
+      ctx.strokeStyle = '#ffea00'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = '#ffea00';
+      ctx.beginPath(); ctx.moveTo(0, -34); ctx.lineTo(10, -12); ctx.lineTo(-10, -12); ctx.closePath(); ctx.fill();
+      ctx.restore();
+      ctx.fillStyle = '#ffea00';
+      ctx.font = 'bold 13px Arial'; ctx.textAlign = 'center';
+      const d = Math.round(dist(Player.pos().x, Player.pos().y, m.x, m.y));
+      ctx.fillText(m.name ? m.name + ' — ' + d + 'm' : d + 'm', mx, my - 44);
+    }
+    // Packages.
+    if (this.index === 2) {
+      for (const pk of this.packages) {
+        if (pk.taken || !cam.visible(pk.x - 30, pk.y - 30, 60, 60)) continue;
+        const px = pk.x - cam.x, py = pk.y - cam.y;
+        ctx.save(); ctx.translate(px, py);
+        ctx.shadowColor = '#00e5ff'; ctx.shadowBlur = 14;
+        ctx.fillStyle = '#00e5ff'; ctx.fillRect(-12, -9, 24, 18);
+        ctx.fillStyle = '#062a33'; ctx.fillRect(-12, -2, 24, 4);
+        ctx.restore();
+      }
+    }
+    // Vault hold progress ring.
+    if (this.index === 4 && this.stage === 1) {
+      const p = Player.pos();
+      ctx.strokeStyle = '#ffea00'; ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.arc(p.x - cam.x, p.y - cam.y - 34, 18, -Math.PI / 2, -Math.PI / 2 + (this.holdTimer / 3) * Math.PI * 2); ctx.stroke();
+    }
+    // Neon caches.
+    for (let i = 0; i < CACHE_SPOTS.length; i++) {
+      if (this.cachesTaken[i]) continue;
+      const c = CACHE_SPOTS[i];
+      if (!cam.visible(c.x - 30, c.y - 30, 60, 60)) continue;
+      const px = c.x - cam.x, py = c.y - cam.y;
+      const glow = 0.6 + 0.4 * Math.sin(t * 4 + i);
+      ctx.save();
+      ctx.globalAlpha = glow;
+      ctx.shadowColor = '#39ff88'; ctx.shadowBlur = 16;
+      ctx.fillStyle = '#39ff88';
+      ctx.font = 'bold 18px Arial'; ctx.textAlign = 'center';
+      ctx.fillText('$', px, py + 6);
+      ctx.restore();
+    }
+  },
+};

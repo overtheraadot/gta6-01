@@ -4,74 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DUSKPORT — Neon Getaway</title>
-<link rel="icon" href="data:,">
 <link rel="stylesheet" href="style.css">
-<script type="importmap">
-{ "imports": { "three": "./vendor/three.module.min.js" } }
-</script>
 </head>
 <body>
-<div id="app">
-  <canvas id="scene"></canvas>
-
-  <!-- HUD -->
-  <div id="hud" class="hidden">
-    <div id="hud-top-left">
-      <div id="cash">$<span id="cash-value">120</span></div>
-      <div id="mission-box">
-        <div id="mission-title">MEET MARA</div>
-        <div id="mission-text">Walk to the neon sign at Dockside Bar.</div>
-      </div>
-    </div>
-    <div id="hud-top-right">
-      <div id="clock">19:42 · DUSK</div>
-      <div id="stars" aria-label="wanted level"></div>
-      <div id="heat-label"></div>
-    </div>
-    <div id="banner" class="hidden"></div>
-    <div id="prompt" class="hidden"></div>
-    <div id="crosshair" class="hidden"><div class="ch-dot"></div></div>
-    <div id="hud-bottom-left">
-      <div id="health-row"><div id="health-bar"><div id="health-fill"></div></div><span id="health-num">100</span></div>
-      <div id="weapon-row"><span id="weapon-icon">👊</span><span id="weapon-name">FISTS</span><span id="ammo"></span></div>
-    </div>
-    <div id="speedo" class="hidden"><span id="speed-num">0</span><span id="speed-unit"> km/h</span></div>
-    <div id="minimap-wrap"><canvas id="minimap" width="360" height="360"></canvas><div id="minimap-label">DUSKPORT · INDUSTRIAL DISTRICT</div></div>
-    <div id="toast" class="hidden"></div>
-    <div id="pause-menu" class="hidden">
-      <h2>PAUSED</h2>
-      <button id="btn-resume">RESUME</button>
-      <button id="btn-save-quit">SAVE &amp; QUIT TO MENU</button>
-      <p class="hint">M — mute · F — enter / exit car · E — interact · Q — give weapon to ally</p>
-    </div>
-    <div id="dead-screen" class="hidden">
-      <h2>BUSTED / FLATLINED</h2>
-      <p id="dead-text">The streets of Duskport are unforgiving.</p>
-      <button id="btn-retry">RESPAWN AT SAFEHOUSE</button>
-    </div>
-  </div>
-
-  <!-- Start screen -->
-  <div id="start-screen">
-    <div id="start-panel">
-      <div id="loading">
-        <div id="loading-label">LOADING DUSKPORT…</div>
-        <div id="loading-track"><div id="loading-fill"></div></div>
-      </div>
-      <div id="start-content" class="hidden">
-        <h1 id="game-title">DUSKPORT</h1>
-        <div id="game-subtitle">NEON GETAWAY · an original open-world crime story</div>
-        <div id="story-blurb">Dusk falls on the Industrial District. One contact, one stolen car, one way out — lose the heat and make the harbour yours.</div>
-        <button id="btn-start">▶ START</button>
-        <button id="btn-continue" class="hidden">CONTINUE — <span id="continue-label"></span></button>
-        <div id="controls-hint">WASD move / drive · SHIFT run · E interact · F enter car · LMB shoot / swing · Q give weapon to ally · ESC pause · M mute</div>
-        <button id="btn-fullscreen">⛶ FULLSCREEN</button>
-        <div id="save-note">Progress saves automatically at the safehouse. Original city, characters, story and music — no Rockstar content.</div>
-      </div>
-    </div>
-    <div id="showcase-tag">ROOK — wheelman for hire · Duskport Industrial District</div>
-  </div>
+<div id="stage">
+  <canvas id="game" width="1280" height="800"></canvas>
+  <div id="hint">DUSKPORT — Neon Getaway · WASD move/drive · E steal car · Click shoot · F punch · P pause</div>
 </div>
-<script type="module" src="./src/main.js"></script>
+<script src="src/util.js"></script>
+<script src="src/city.js"></script>
+<script src="src/audio.js"></script>
+<script src="src/vehicles.js"></script>
+<script src="src/people.js"></script>
+<script src="src/combat.js"></script>
+<script src="src/missions.js"></script>
+<script src="src/hud.js"></script>
+<script src="src/shots.js"></script>
+<script src="src/boot.js"></script>
 </body>
 </html>

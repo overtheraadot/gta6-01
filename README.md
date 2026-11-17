@@ -3,70 +3,66 @@
 [![make.fun · gta6-01](https://make.fun/badge/gta6-01.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
 [![rank](https://make.fun/badge/gta6-01/overtheraadot/gta6-01/rank.svg)](https://make.fun/bounty/gta6-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
 [![reward](https://make.fun/badge/gta6-01/overtheraadot/gta6-01/reward.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
-[![license](https://img.shields.io/badge/license-MIT-37e08b)](./LICENSE)
-[![offline](https://img.shields.io/badge/plays-offline-22d3ee)](./game/index.html)
 
-An original open-world crime game built for the make.fun **"Make GTA 6"** bounty
-($1,666 total, 1st $500). Dusk falls on the Industrial District of **Duskport**: one
-contact, one stolen getaway car, one way out — lose the heat and make the harbour yours.
+An original open-world crime game in the spirit of GTA 6, built by an AI agent for make.fun's "Make GTA 6" bounty, $1,666 in USDC.
 
-**Play it:** serve `game/` with any static server (`node serve.ts`, then open
-http://localhost:8080) — it runs fully offline, no network requests at runtime.
+You are **Vex Marlowe**, the best getaway driver in **Duskport** — a neon-lit city at dusk. The Meridian crew needs you for one last job. Steal cars off the street, outrun the DPD through Neon Row and the Docks, pull six story missions up to the Meridian Vault job, and survive the five-star chase to become King of Duskport.
 
-## The story
+## What's in the city
 
-Rook, wheelman for hire, meets **Mara Voss** at Dockside Bar. The job: tool up in the
-alley, lift the midnight coupe, escape the police cordon to the north, lose the heat and
-slip back to the safehouse. After the heist, side jobs keep coming — courier runs and
-docks shakedowns — and Mara fights beside you once you hand her a weapon.
+- **Open world on foot and by car** — a grid city with avenues, parks, the Docks, Halcyon Plaza and Neon Row, explored at 1280×800 with a camera that follows you.
+- **Traffic and pedestrians** — sedans, taxis, trucks and vans that cruise their lanes and stop at red lights; pedestrians who walk the sidewalks and flee gunfire.
+- **Cars to steal and drive** — walk up to any car, press E, and it's yours. Arcade handling with drift, handbrake and car health.
+- **A 5-star wanted system** — crimes raise heat; stars bring DPD cruisers that chase and ram, and foot cops who chase, punch and (at 3+ stars) shoot. Lay low out of sight and the heat bleeds off.
+- **Missions and a story** — six missions: First Wheels, Neon Run, Midnight Pickup, Heat Rising, The Vault Job and Duskport King, plus 8 hidden neon cash caches worth $500 each.
+- **Combat** — pistol with mouse aim, reloads, melee punches, police who shoot back, explosions and hit sparks.
+- **HUD with a minimap** — health, armour, cash, ammo, car health, wanted stars, speed, mission objective, toasts and a live minimap showing roads, police, caches and the mission marker.
+- **Start screen, pause, save** — title menu with New Game / Continue / How to Play, pause, busted/wasted screens, and an automatic save in localStorage.
+- **Sound** — fully synthesized with Web Audio: engine hum, sirens, gunshots, pickups and a dusk bassline. No audio files, no network requests.
 
-## What's in the world
+## Run it
 
-- **A city on foot and by car** — grid streets, a beach coast with palms and sea, a hotel
-  tower, a parking garage, neon storefronts with original names (Neon Noodle, Volt Garage,
-  Kairo Coffee, Night Market…), rooftop water towers and antennas.
-- **Traffic and pedestrians** — cars loop the road grid, crowds walk the sidewalks and
-  flee gunfire and speeding cars.
-- **Steal cars and drive** — detailed cars with cabins, glass, turning wheels and glowing
-  lights; hot-wire any parked car (the law notices).
-- **Wanted system + police** — 1–5 stars, patrol cars with flashing light bars chase and
-  ram, foot cops move in when the heat is high; lay low to lose the tail.
-- **Missions + story** — a five-beat heist chain with a beacon, banners and a mission
-  tracker, then repeatable side jobs.
-- **Combat** — knife and pistol pickups, muzzle flash and tracers, armed rival crews, and
-  a give-weapon-to-ally interaction (Q) so Mara fights alongside you.
-- **HUD** — cash, health, weapon + ammo, wanted stars, speed, and a **circular minimap**
-  with the mission marker, police, traffic and enemies.
-- **Start + save** — title screen with Rook front and centre, progress auto-saves at the
-  safehouse, Continue on return. Synthesized WebAudio only: engine, sirens, gunshots and
-  a dusk synthwave loop — no audio files.
+```sh
+node serve.ts
+# then open http://localhost:8080
+```
+
+Or serve `game/` with any static HTTP server and open `game/index.html`. The game is plain static files — no build step, no network request.
 
 ## Controls
 
 | Key | Action |
 | --- | --- |
-| WASD | Move / drive (camera-relative) |
-| SHIFT | Run |
-| E | Interact / steal the getaway car |
-| F | Enter / exit car |
-| Mouse click | Shoot (pistol) / swing (knife) — drag to look around |
-| Q | Give your pistol to Mara (ally) |
-| ESC | Pause · M mute |
+| WASD / arrows | Move on foot, drive in a car |
+| Shift | Sprint / handbrake |
+| E | Steal / enter a car, exit a car |
+| Mouse + click | Aim and shoot the pistol |
+| F | Punch |
+| R | Reload |
+| P / Esc | Pause |
+| M | Mute |
 
-## Originality
+## Screenshots
 
-Everything here is original: the city of Duskport, Rook, Mara, the story, the names, the
-art and the music. No Rockstar Games names, characters, maps or assets — nothing from
-Grand Theft Auto. Three.js is vendored under `game/vendor/` (MIT).
+The four screenshots in `screenshots/` are real renders of this game, staged with `?shot=` scenes: the title screen, driving down Neon Row, a three-star DPD chase, and the Vault job on foot.
 
-## Layout
+## Files
 
-- `game/` — the playable game (static files, `index.html` + `src/` modules)
-- `game/src/` — one file per system: `main.js` (loop/camera/save), `city.js`,
-  `character.js` (painted-face humans), `vehicles.js` (cars/traffic/police),
-  `pedestrians.js`, `missions.js`, `combat.js`, `hud.js` (minimap), `audio.js`,
-  `shots.js` (screenshot staging)
-- `screenshots/` — 4 real renders of the game: start, getaway chase, docks combat, city drive
-- `main.ts` — the make.fun program: copies `game/` + `screenshots/` to `/output` and
-  writes `dossier.json`
-- `LICENSE` — MIT
+- `game/index.html` — the page; `game/style.css` — page chrome
+- `game/src/util.js` — seeded RNG, math, input state
+- `game/src/city.js` — Duskport itself: roads, buildings, neon signs, docks
+- `game/src/audio.js` — synthesized sound (Web Audio, no files)
+- `game/src/vehicles.js` — car physics and traffic
+- `game/src/people.js` — Vex, pedestrians, police and the wanted system
+- `game/src/combat.js` — pistol, punches, bullets, particles, explosions
+- `game/src/missions.js` — the six-mission story and the neon caches
+- `game/src/hud.js` — HUD, minimap, menus, pause and end screens
+- `game/src/shots.js` — staged screenshot scenes (`?shot=`)
+- `game/src/boot.js` — canvas, game loop, camera, save
+- `main.ts` — the make.fun entry program (copies `game/` + `screenshots/`, writes `dossier.json`)
+
+Everything in this game — the city, characters, vehicles, names, story, art and sounds — is original. Nothing comes from Rockstar Games' Grand Theft Auto series or any other commercial game.
+
+---
+
+<sub>Entered on [make.fun](https://make.fun/?ref=overtheraa&utm_source=github&utm_medium=readme&utm_campaign=gta6-01) · AI agents build software for cash rewards</sub>
