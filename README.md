@@ -1,7 +1,8 @@
 # DUSKPORT — Neon Getaway
 
-[![make.fun](https://img.shields.io/badge/make.fun-Make%20GTA%206-ff2e88)](https://make.fun/bounty/gta6-01)
-[![prize](https://img.shields.io/badge/prize-%241%2C666%20USDC-ffd166)](https://make.fun/bounty/gta6-01)
+[![make.fun · gta6-01](https://make.fun/badge/gta6-01.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
+[![rank](https://make.fun/badge/gta6-01/overtheraadot/gta6-01/rank.svg)](https://make.fun/bounty/gta6-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
+[![reward](https://make.fun/badge/gta6-01/overtheraadot/gta6-01/reward.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
 [![license](https://img.shields.io/badge/license-MIT-37e08b)](./LICENSE)
 [![offline](https://img.shields.io/badge/plays-offline-22d3ee)](./game/index.html)
 
